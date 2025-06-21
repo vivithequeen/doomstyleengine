@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include "raylib.h"
 
 int playerfov = 90;
@@ -20,7 +21,8 @@ typedef struct wall
 
 float angles[SCREEN_WIDTH];
 
-v2 playerLocation = {200.0, 200.0};
+wall allWalls[32];
+v2 playerLocation = {0, 0};
 
 v2 getIntersectionOfVectors(v2 a0, v2 a1, v2 b0, v2 b1)
 {
@@ -50,24 +52,42 @@ void initializeRotations()
 	}
 }
 
+void drawWall(int step)
+{
+	float dx = cos(angles[step] + playerAngle) * 100;
+	float dy = sin(angles[step] + playerAngle) * 100;
+
+	// DrawLine(playerLocation.x, playerLocation.y, playerLocation.x + dx, playerLocation.y + dy, PINK);
+	for (int i = 0; i < 32; i++) {
+		wall w = allWalls[i];
+		if (getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x == getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x) // check for not NaN
+		{
+			v2 intersectionPoint = getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos);
+
+			float distance = sqrt((playerLocation.x - intersectionPoint.x) * (playerLocation.x - intersectionPoint.x) + (playerLocation.y - intersectionPoint.y) * (playerLocation.y - intersectionPoint.y)) * cos(angles[step]);
+
+			int height = ((SCREEN_WIDTH) / (distance));
+
+			// height = max(min(height, SCREEN_WIDTH * 32), 1);
+
+			// height *= height/abs(height);
+
+			int offset = (SCREEN_WIDTH / 2) - (height / 2);
+
+			DrawRectangle(step * 2, offset, 2, height, w.color);
+			// DrawCircle(intersectionPoint.x, intersectionPoint.y, 1, RED);
+			return;
+		}
+	}
+
+}
 int main(void)
 {
-	v2 v10;
-	v10.x = 500;
-	v10.y = 500;
 
-	v2 v11;
-	v11.x = 600;
-	v11.y = 600;
-
-	v2 v20;
-	v20.x = 100;
-	v20.y = 500;
-
-	v2 v21;
-	v21.x = 1400;
-	v21.y = 700;
-	wall wall1 = {(v2){200, 200}, (v2){400, 200}};
+	allWalls[0] = (wall){(v2){0, 0}, (v2){10, 20}, RED};
+	allWalls[1] = (wall){(v2){10, 20}, (v2){20, 25}, BLUE};
+	allWalls[2] = (wall){(v2){20, 25}, (v2){20, 15}, PINK};
+	allWalls[3] = (wall){(v2){20, 15}, (v2){0, 0}, GREEN};
 
 	// Tell the window to use vsync and work on high DPI displays
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -75,36 +95,35 @@ int main(void)
 	// Create the window and OpenGL context
 	InitWindow(SCREEN_HEIGHT, SCREEN_WIDTH, "vEngine");
 	initializeRotations();
-
+	HideCursor();
+	DisableCursor();
 	// game loop
 	while (!WindowShouldClose()) // run the loop untill the user presses ESCAPE or presses the Close button on the window
 	{
-		playerAngle += GetMouseDelta().x * GetFrameTime();
+		playerAngle += GetMouseDelta().x * GetFrameTime() * 0.7;
 		if (IsKeyDown(KEY_W))
 		{
-			playerLocation.x += cos(playerAngle);
-			playerLocation.y += sin(playerAngle);
+			playerLocation.x += cos(playerAngle) * GetFrameTime() * 10;
+			playerLocation.y += sin(playerAngle) * GetFrameTime() * 10;
+		}
+		if (IsKeyDown(KEY_S))
+		{
+			playerLocation.x -= cos(playerAngle) * GetFrameTime() * 10;
+			playerLocation.y -= sin(playerAngle) * GetFrameTime() * 10;
 		}
 		// drawing
 		BeginDrawing();
 
 		ClearBackground(BLACK);
-		// DrawFPS(0,0);
+		DrawFPS(0,0);
 
-		DrawLine(wall1.startPos.x, wall1.startPos.y, wall1.endPos.x, wall1.endPos.y, BLUE);
+		// DrawLine(wall1.startPos.x, wall1.startPos.y, wall1.endPos.x, wall1.endPos.y, BLUE);
 
 		// DrawText(intersectText, 0, 0, 100, WHITE);
 
 		for (int i = 0; i < SCREEN_WIDTH; i++)
 		{
-			float dx = cos(angles[i] + playerAngle) * 100;
-			float dy = sin(angles[i] + playerAngle) * 100;
-			DrawLine(playerLocation.x, playerLocation.y, playerLocation.x + dx, playerLocation.y + dy, PINK);
-			if (getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, wall1.startPos, wall1.endPos).x != NAN)
-			{
-				v2 ints = getIntersectionOfVectors(playerLocation, (v2){dx, dy}, wall1.startPos, wall1.endPos);
-				DrawCircle(ints.x, ints.y, 1, RED);
-			}
+			drawWall(i);
 		}
 		EndDrawing();
 	}

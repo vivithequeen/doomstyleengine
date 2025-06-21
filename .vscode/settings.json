@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "raylib.h": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "random": "c",
+        "cmath": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
