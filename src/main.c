@@ -16,13 +16,13 @@ typedef struct wall
 	Color color;
 } wall;
 
-#define SCREEN_HEIGHT 1920
-#define SCREEN_WIDTH 1080
+#define SCREEN_HEIGHT 1080
+#define SCREEN_WIDTH 1920
 
 float angles[SCREEN_WIDTH];
 
 wall allWalls[32];
-v2 playerLocation = {0, 0};
+v2 playerLocation = {1, 1};
 
 v2 getIntersectionOfVectors(v2 a0, v2 a1, v2 b0, v2 b1)
 {
@@ -43,7 +43,7 @@ v2 getIntersectionOfVectors(v2 a0, v2 a1, v2 b0, v2 b1)
 
 void initializeRotations()
 {
-	float step = (tan(playerfov / 2) * 2) / (SCREEN_WIDTH - 1);
+	float step = (tan((playerfov*DEG2RAD) / 2) * 2) / (SCREEN_WIDTH - 1);
 
 	for (int i = 0; i < SCREEN_WIDTH; i++)
 	{
@@ -54,32 +54,57 @@ void initializeRotations()
 
 void drawWall(int step)
 {
-	float dx = cos(angles[step] + playerAngle) * 100;
-	float dy = sin(angles[step] + playerAngle) * 100;
-
+	float dx = cos(angles[step] + playerAngle) * 1000;
+	float dy = sin(angles[step] + playerAngle) * 1000;
+	float distances[32];
 	// DrawLine(playerLocation.x, playerLocation.y, playerLocation.x + dx, playerLocation.y + dy, PINK);
 	for (int i = 0; i < 32; i++) {
 		wall w = allWalls[i];
-		if (getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x == getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x) // check for not NaN
+		if (getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x == getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x) 
 		{
 			v2 intersectionPoint = getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos);
 
-			float distance = sqrt((playerLocation.x - intersectionPoint.x) * (playerLocation.x - intersectionPoint.x) + (playerLocation.y - intersectionPoint.y) * (playerLocation.y - intersectionPoint.y)) * cos(angles[step]);
+			float distance = sqrt((playerLocation.x -  intersectionPoint.x) * (playerLocation.x - intersectionPoint.x) + (playerLocation.y - intersectionPoint.y) * (playerLocation.y - intersectionPoint.y)) * cos(angles[step]);
+			distances[i] = distance;
 
-			int height = ((SCREEN_WIDTH) / (distance));
-
-			// height = max(min(height, SCREEN_WIDTH * 32), 1);
-
-			// height *= height/abs(height);
-
-			int offset = (SCREEN_WIDTH / 2) - (height / 2);
-
-			DrawRectangle(step * 2, offset, 2, height, w.color);
-			// DrawCircle(intersectionPoint.x, intersectionPoint.y, 1, RED);
-			return;
+		}
+		else
+		{
+			distances[i] = -1;
 		}
 	}
+	sortWallsByDistance(allWalls,distances);
+	for (int i = 0; i < 32; i++)
+	{
+		if(distances[32-i] > 0)
+		{
+			int height = ((SCREEN_HEIGHT) / (distances[32-i]));
+			// height = max(min(height, SCREEN_WIDTH * 32), 1);
+			// height *= height/abs(height);
+			int offset = (SCREEN_HEIGHT / 2) - (height / 2);
+			DrawRectangle(step , offset, 1, height, allWalls[32-i].color);
+			// DrawCircle(intersectionPoint.x, intersectionPoint.y, 1, RED);
+		}
 
+	}
+
+}
+void sortWallsByDistance(wall walls[], float distances[])
+{
+	for(int i=0;i<32; i++) {
+	   int minIndex = i;  
+	   for(int j=i+1;j<32; j++) {
+	      if(distances[j]<distances[minIndex]) {
+	        minIndex = j;
+	      }
+	   }
+	   float temp = distances[i];
+	   distances[i] = distances[minIndex];
+	   distances[minIndex] = temp;
+	   wall t = walls[i];
+	   walls[i] = walls[minIndex];
+	   walls[minIndex] = t;
+	}
 }
 int main(void)
 {
@@ -93,7 +118,7 @@ int main(void)
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
 
 	// Create the window and OpenGL context
-	InitWindow(SCREEN_HEIGHT, SCREEN_WIDTH, "vEngine");
+	InitWindow(SCREEN_WIDTH,SCREEN_HEIGHT , "vEngine");
 	initializeRotations();
 	HideCursor();
 	DisableCursor();
