@@ -22,19 +22,22 @@ typedef struct sector
 	float floor, ceiling;
 	int indexStart, indexEnd;
 } sector;
+
 typedef struct billboard
 {
 	v2 pos;
 	char texture[32];
 	float width, height;
 } billboard;
+
 #define SCREEN_HEIGHT 1080
 #define SCREEN_WIDTH 1920
 float playerZ = 540;
 float angles[SCREEN_WIDTH];
 sector sect = {0, 60};
 wall allWalls[32];
-v2 playerLocation = {1, 1};
+billboard allbillboards[32];
+v2 playerLocation = {10, 3};
 
 v2 getIntersectionOfVectors(v2 a0, v2 a1, v2 b0, v2 b1)
 {
@@ -97,6 +100,7 @@ void drawWall(int step)
 			int offset = (SCREEN_HEIGHT / 2) - (height / 2);
 			DrawRectangle(step , offset, 1, height, allWalls[32-i].color);
 			// DrawCircle(intersectionPoint.x, intersectionPoint.y, 1, RED);
+
 		}
 
 	}
@@ -128,7 +132,9 @@ int main(void)
 	allWalls[0] = (wall){(v2){0, 0}, (v2){10, 20}, RED};
 	allWalls[1] = (wall){(v2){10, 20}, (v2){20, 25}, BLUE};
 	allWalls[2] = (wall){(v2){20, 25}, (v2){20, 15}, PINK};
-	allWalls[3] = (wall){(v2){20, 15}, (v2){0, 0}, GREEN};
+	allWalls[3] = (wall){(v2){20, 15}, (v2){30, 10}, GREEN};
+	allWalls[4] = (wall){(v2){30, 10}, (v2){5, 5}, WHITE};
+	allWalls[5] = (wall){(v2){5, 5}, (v2){0, 0}, YELLOW};
 
 	// Tell the window to use vsync and work on high DPI displays
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -144,23 +150,23 @@ int main(void)
 		playerAngle += GetMouseDelta().x * GetFrameTime() * 0.7;
 		if (IsKeyDown(KEY_W))
 		{
-			playerLocation.x += cos(playerAngle) * GetFrameTime() * 10;
-			playerLocation.y += sin(playerAngle) * GetFrameTime() * 10;
+			playerLocation.x += cos(playerAngle) * GetFrameTime() * 5;
+			playerLocation.y += sin(playerAngle) * GetFrameTime() * 5;
 		}
 		if (IsKeyDown(KEY_S))
 		{
-			playerLocation.x -= cos(playerAngle) * GetFrameTime() * 10;
-			playerLocation.y -= sin(playerAngle) * GetFrameTime() * 10;
+			playerLocation.x -= cos(playerAngle) * GetFrameTime() * 5;
+			playerLocation.y -= sin(playerAngle) * GetFrameTime() * 5;
 		}
 		if (IsKeyDown(KEY_D))
 		{
-			playerLocation.x += cos(playerAngle+(PI/2)) * GetFrameTime() * 10;
-			playerLocation.y += sin(playerAngle+(PI/2)) * GetFrameTime() * 10;
+			playerLocation.x += cos(playerAngle+(PI/2)) * GetFrameTime() * 5;
+			playerLocation.y += sin(playerAngle+(PI/2)) * GetFrameTime() * 5;
 		}
 		if (IsKeyDown(KEY_A))
 		{
-			playerLocation.x += cos(playerAngle-(PI/2)) * GetFrameTime() * 10;
-			playerLocation.y += sin(playerAngle-(PI/2)) * GetFrameTime() * 10;
+			playerLocation.x += cos(playerAngle-(PI/2)) * GetFrameTime() * 5;
+			playerLocation.y += sin(playerAngle-(PI/2)) * GetFrameTime() * 5;
 		}
 		// drawing
 		BeginDrawing();
@@ -171,7 +177,8 @@ int main(void)
 		// DrawLine(wall1.startPos.x, wall1.startPos.y, wall1.endPos.x, wall1.endPos.y, BLUE);
 
 		// DrawText(intersectText, 0, 0, 100, WHITE);
-
+		//DrawRectangle(0,0,SCREEN_WIDTH,SCREEN_HEIGHT/2,GRAY);
+		//DrawRectangle(0,SCREEN_HEIGHT/2,SCREEN_WIDTH,SCREEN_HEIGHT/2,LIGHTGRAY);
 		for (int i = 0; i < SCREEN_WIDTH; i++)
 		{
 			drawWall(i);
