@@ -9,6 +9,7 @@ typedef struct v2
 {
 	float x, y;
 } v2;
+
 typedef struct wall
 {
 	v2 startPos;
@@ -16,11 +17,22 @@ typedef struct wall
 	Color color;
 } wall;
 
+typedef struct sector
+{
+	float floor, ceiling;
+	int indexStart, indexEnd;
+} sector;
+typedef struct billboard
+{
+	v2 pos;
+	char texture[32];
+	float width, height;
+} billboard;
 #define SCREEN_HEIGHT 1080
 #define SCREEN_WIDTH 1920
-
+float playerZ = 540;
 float angles[SCREEN_WIDTH];
-
+sector sect = {0, 60};
 wall allWalls[32];
 v2 playerLocation = {1, 1};
 
@@ -43,7 +55,7 @@ v2 getIntersectionOfVectors(v2 a0, v2 a1, v2 b0, v2 b1)
 
 void initializeRotations()
 {
-	float step = (tan((playerfov*DEG2RAD) / 2) * 2) / (SCREEN_WIDTH - 1);
+	float step = (tan((playerfov * DEG2RAD) / 2) * 2) / (SCREEN_WIDTH - 1);
 
 	for (int i = 0; i < SCREEN_WIDTH; i++)
 	{
@@ -54,26 +66,27 @@ void initializeRotations()
 
 void drawWall(int step)
 {
+	float projConst = (SCREEN_HEIGHT / 2) / tanf((playerfov * DEG2RAD) / 2);
 	float dx = cos(angles[step] + playerAngle) * 1000;
 	float dy = sin(angles[step] + playerAngle) * 1000;
 	float distances[32];
 	// DrawLine(playerLocation.x, playerLocation.y, playerLocation.x + dx, playerLocation.y + dy, PINK);
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < 32; i++)
+	{
 		wall w = allWalls[i];
-		if (getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x == getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x) 
+		if (getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x == getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos).x)
 		{
 			v2 intersectionPoint = getIntersectionOfVectors(playerLocation, (v2){playerLocation.x + dx, playerLocation.y + dy}, w.startPos, w.endPos);
 
-			float distance = sqrt((playerLocation.x -  intersectionPoint.x) * (playerLocation.x - intersectionPoint.x) + (playerLocation.y - intersectionPoint.y) * (playerLocation.y - intersectionPoint.y)) * cos(angles[step]);
+			float distance = sqrt((playerLocation.x - intersectionPoint.x) * (playerLocation.x - intersectionPoint.x) + (playerLocation.y - intersectionPoint.y) * (playerLocation.y - intersectionPoint.y)) * cos(angles[step]);
 			distances[i] = distance;
-
 		}
 		else
 		{
 			distances[i] = -1;
 		}
 	}
-	sortWallsByDistance(allWalls,distances);
+	sortWallsByDistance(allWalls, distances);
 	for (int i = 0; i < 32; i++)
 	{
 		if(distances[32-i] > 0)
@@ -87,23 +100,26 @@ void drawWall(int step)
 		}
 
 	}
-
 }
+
 void sortWallsByDistance(wall walls[], float distances[])
 {
-	for(int i=0;i<32; i++) {
-	   int minIndex = i;  
-	   for(int j=i+1;j<32; j++) {
-	      if(distances[j]<distances[minIndex]) {
-	        minIndex = j;
-	      }
-	   }
-	   float temp = distances[i];
-	   distances[i] = distances[minIndex];
-	   distances[minIndex] = temp;
-	   wall t = walls[i];
-	   walls[i] = walls[minIndex];
-	   walls[minIndex] = t;
+	for (int i = 0; i < 32; i++)
+	{
+		int minIndex = i;
+		for (int j = i + 1; j < 32; j++)
+		{
+			if (distances[j] < distances[minIndex])
+			{
+				minIndex = j;
+			}
+		}
+		float temp = distances[i];
+		distances[i] = distances[minIndex];
+		distances[minIndex] = temp;
+		wall t = walls[i];
+		walls[i] = walls[minIndex];
+		walls[minIndex] = t;
 	}
 }
 int main(void)
@@ -118,7 +134,7 @@ int main(void)
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
 
 	// Create the window and OpenGL context
-	InitWindow(SCREEN_WIDTH,SCREEN_HEIGHT , "vEngine");
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "vEngine");
 	initializeRotations();
 	HideCursor();
 	DisableCursor();
@@ -136,11 +152,21 @@ int main(void)
 			playerLocation.x -= cos(playerAngle) * GetFrameTime() * 10;
 			playerLocation.y -= sin(playerAngle) * GetFrameTime() * 10;
 		}
+		if (IsKeyDown(KEY_D))
+		{
+			playerLocation.x += cos(playerAngle+(PI/2)) * GetFrameTime() * 10;
+			playerLocation.y += sin(playerAngle+(PI/2)) * GetFrameTime() * 10;
+		}
+		if (IsKeyDown(KEY_A))
+		{
+			playerLocation.x += cos(playerAngle-(PI/2)) * GetFrameTime() * 10;
+			playerLocation.y += sin(playerAngle-(PI/2)) * GetFrameTime() * 10;
+		}
 		// drawing
 		BeginDrawing();
 
 		ClearBackground(BLACK);
-		DrawFPS(0,0);
+		DrawFPS(0, 0);
 
 		// DrawLine(wall1.startPos.x, wall1.startPos.y, wall1.endPos.x, wall1.endPos.y, BLUE);
 
